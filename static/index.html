@@ -33,7 +33,7 @@ var host = window.location.host;
 var context = canvas.getContext("2d");
 var W = canvas.width  = window.innerWidth-6;
 var H = canvas.height = window.innerHeight-50;
-var wscounter = 0;
+var wscounter = 0; 
 var socket;
 
 function debug(str) {
@@ -44,17 +44,33 @@ debug("Test");
 
 world = {};
 
+function updateWorld(objs) {
+    if (objs){
+        for (var i in objs){
+            world[i] = objs[i];
+        }
+        drawNextFrame();
+    }
+}
+
 //XXX: TODO Make this prettier!
 function drawCircle(context,entity) {
     with(context) {
-        beginPath();                
+        beginPath();              
         lineWidth = 3;
         var x = entity["x"];
         var y = entity["y"];
-        //moveTo(x,y);
+        if (entity["radius"] == 15){
+            globalAlpha = 0.95;
+        }
+        else {
+            globalAlpha = 0.3;
+        }
+        // moveTo(x,y);
         fillStyle = entity["colour"];
         strokeStyle = fillStyle;
-        arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
+        arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);
+        fill();
         stroke();                                
     }
 }
@@ -122,9 +138,12 @@ function getPosition(e) {
 }
 
 function addEntity(entity, data) {
-    world[entity] = data;
-    drawNextFrame(); // (but should we?)
+    // world[entity] = data;
+    // drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just modified!
+    obj = {}
+    obj[entity] = data;
+    socket.send(JSON.stringify( obj ));
 }
 var counter = 0;
 function addEntityWithoutName(data) {
@@ -230,17 +249,30 @@ mouse = (function() {
 
 // Add the application specific mouse listeners!
 //XXX: TODO Make these prettier!
+var h = 0;
+function getColorDrag(){
+    var color = "hsl("+h+", 100%, 75%)";
+    h = (h+1)%360;
+    return color;
+}
+
+function getColorClick(){
+    var color = "hsl("+h+", 100%, 90%)";
+    h = (h+1)%360;
+    return color;
+}
+
 mouse.mousedowners.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'blue'});
+    addEntityWithoutName({'x':x,'y':y,'colour':getColorClick(), 'radius': 30});
 });
 
 mouse.mouseuppers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'red'});
+    addEntityWithoutName({'x':x,'y':y,'colour':getColorClick(), 'radius': 30});
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'green',
-                          'radius':10});
+    addEntityWithoutName({'x':x,'y':y,'colour':getColorDrag(),
+                          'radius': 15});
 });
 
 
@@ -254,27 +286,26 @@ function wsSetup() {
     socket = new WebSocket(url);
     socket.onopen = function() {
         //XXX: TODO What are you going to do here?
+        wscounter++;
     };
     socket.onerror = function(msg) {
         debug("WebSocket Error:" + msg.data);
     };
-    socket.onmessage = function(msg) {  
+    socket.onmessage = function(message) {  
         try {
-            debug("WebSocket Recv:" + msg.data);
-            //XXX: TODO What are you going to do here?            
+            var objs = JSON.parse(message.data);
+            updateWorld(objs);
         } catch (e) {
             alert("socket on message: " + e);
         }
-    }; 
+    };
 }
 
 wsSetup();
 
 
-
-
 // 30 frames per second
-setInterval( update, 1000/30.0);
+setInterval(update, 1000/30.0);
 
 
     </script>
