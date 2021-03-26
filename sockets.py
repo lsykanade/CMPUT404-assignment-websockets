@@ -104,6 +104,8 @@ def read_ws(ws,client):
             print("WS RECV: %s" % msg)
             if (msg is not None):
                 packet = json.loads(msg)
+                for entity in packet:
+                    myWorld.set(entity, packet[entity])
                 send_all_json(packet)
             else:
                 break
@@ -116,12 +118,13 @@ def subscribe_socket(ws):
     '''Fufill the websocket URL of /subscribe, every update notify the
        websocket and read updates from the websocket '''
     # XXX: TODO IMPLEMENT ME
-    print("are you kidding me?")
     client = Client()
     clients.append(client)
     g = gevent.spawn( read_ws, ws, client)
 
     try:
+        for entity in myWorld.space:
+            ws.send(json.dumps(myWorld.space))
         while True:
             # block here
             msg = client.get()
