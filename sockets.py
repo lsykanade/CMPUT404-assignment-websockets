@@ -101,7 +101,6 @@ def read_ws(ws,client):
     try:
         while True:
             msg = ws.receive()
-            print("WS RECV: %s" % msg)
             if (msg is not None):
                 packet = json.loads(msg)
                 for entity in packet:
@@ -128,7 +127,6 @@ def subscribe_socket(ws):
         while True:
             # block here
             msg = client.get()
-            print("Got a message!")
             ws.send(msg)
     except Exception as e:# WebSocketError as e:
         print("WS Error %s" % e)
@@ -152,7 +150,10 @@ def flask_post_json():
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
     '''update the entities via this interface'''
-    return None
+    v = flask_post_json()
+    myWorld.set(entity, v)
+    e = myWorld.get(entity)
+    return make_response(flask.jsonify(e), 200)
 
 @app.route("/world", methods=['POST','GET'])    
 def world():
@@ -168,7 +169,8 @@ def world():
 @app.route("/entity/<entity>")    
 def get_entity(entity):
     '''This is the GET version of the entity interface, return a representation of the entity'''
-    return None
+    entity = myWorld.get(entity)
+    return make_response(flask.jsonify(entity), 200)
 
 
 @app.route("/clear", methods=['POST','GET'])

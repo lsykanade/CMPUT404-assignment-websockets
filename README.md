@@ -64,5 +64,5 @@ Contributors
 Resource
 ============
 For drawing circle style, I reuse the style from assignment 4. 
-"/world" and "clear" will do same thing as assignment 4 using http request.
-"/update" cannot work anymore since it is using websocket now.
+update, world, get and clear will do same thing as assignment 4 assuming http request.
+
